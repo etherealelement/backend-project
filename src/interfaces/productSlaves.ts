@@ -8,7 +8,8 @@ export interface IproductSlaves {
 export interface IResponse { 
     id: number;
     title: string;
-};
+    studentsCount: number;
+}
 
 
 export interface IDataBase {

@@ -4,6 +4,9 @@ import { Request } from "express";
 import {productSlaves} from "./data/productSlaves";
 import { Response } from "express";
 import {IDataBase, IproductSlaves, IResponse} from "./interfaces/productSlaves";
+import {RequestWithBody, RequestWithParams, RequestWithParamsAndBody, RequestWithQuery} from "./types/types";
+import {CourseCreateInputModel} from "./models/CreateCourseModel";
+import {CourseViewModel} from "./models/CourseViewModel";
 export const app = express()
 const port = process.env.PORT || 5000
 
@@ -13,21 +16,32 @@ app.use(parserMiddleWare)
 
 
 const db: IDataBase = {
-    courses: [{id: 1, title: "front"}, {id: 2, title: "bek"}, {id: 3, title: "devops"}],
+    courses: [
+        {id: 1, title: "front", studentsCount: 10},
+        {id: 2, title: "bek", studentsCount: 5},
+        {id: 3, title: "devops", studentsCount: 15}],
 }
 
 
 // requests
-app.get('/courses', (req: Request<{},{},{title: string}>, res: Response<IResponse[]>) => {
-    let foundCourse = db.courses;
+app.get('/courses', (req: RequestWithQuery<{title: string}>, res: Response<CourseViewModel[]>) => {
+    let foundCourses = db.courses;
 
     if (req.query.title) {
-        foundCourse = foundCourse.filter(item => item.title.indexOf(req.query.title as string) > -1)
+        foundCourses = foundCourses.filter(item => item.title.indexOf(req.query.title as string) > -1)
     }
-    res.send(foundCourse);
+
+    res.json(foundCourses.map(item => {
+        return {
+            id: item.id,
+            title: item.title
+        }
+    }))
+
+
 })
 
-app.get("/courses/:id", (req: Request<{id: number | string}>, res) => {
+app.get("/courses/:id", (req: RequestWithParams<{id: number | string}>, res:Response<CourseViewModel>) => {
     const foundCourses = db.courses.find(item => item.id === +req.params.id)
 
     if(!foundCourses) return res.sendStatus(404)
@@ -35,26 +49,27 @@ app.get("/courses/:id", (req: Request<{id: number | string}>, res) => {
     res.send(foundCourses)
 })
 
-app.post("/courses", (req: Request<{}, {}, {title: string}>, res:Response<IResponse>) => {
+app.post("/courses", (req: RequestWithBody<CourseCreateInputModel>, res:Response<IResponse>) => {
     if(!req.body.title) {
         return res.sendStatus(404);
     }
 
-    const createdCourse = {
+    const createdCourse:IResponse = {
         id: +(new Date()),
-        title: req.body.title
+        title: req.body.title,
+        studentsCount: 5,
     }
     db.courses.push(createdCourse);
 
     res.status(201).json(createdCourse);
 })
 
-app.delete("/courses/:id", (req:Request<{id: string}>,res) => {
+app.delete("/courses/:id", (req:RequestWithParams<{id: string}>,res) => {
     db.courses = db.courses.filter(item => item.id !== +req.params.id)
     res.send(204)
 })
 
-app.put("/courses/:id", (req:Request<{id: string}, {}, {title: string}>, res) => {
+app.put("/courses/:id", (req:RequestWithParamsAndBody<{id: string}, {title: string}>, res) => {
     if(! +req.body.title) {
         res.sendStatus(404)
         return
