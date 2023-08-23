@@ -1,8 +1,10 @@
 import express from "express";
-import bodyParser from "body-parser";``
+import bodyParser from "body-parser";
+import { Request } from "express";
 import {productSlaves} from "./data/productSlaves";
-
-const app = express()
+import { Response } from "express";
+import {IDataBase, IproductSlaves, IResponse} from "./interfaces/productSlaves";
+export const app = express()
 const port = process.env.PORT || 5000
 
 // middleware
@@ -10,71 +12,65 @@ const parserMiddleWare = bodyParser();
 app.use(parserMiddleWare)
 
 
+const db: IDataBase = {
+    courses: [{id: 1, title: "front"}, {id: 2, title: "bek"}, {id: 3, title: "devops"}],
+}
+
 
 // requests
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
+app.get('/courses', (req: Request<{},{},{title: string}>, res: Response<IResponse[]>) => {
+    let foundCourse = db.courses;
 
-
-app.get('/slaves', (req, res) => {
-    if(req.query.title ) {
-
-        const filteredProduct = productSlaves.filter(item => item.title.indexOf(String(req.query.title)) > -1);
-        res.send(filteredProduct);
-    } else {
-        res.send(productSlaves)
+    if (req.query.title) {
+        foundCourse = foundCourse.filter(item => item.title.indexOf(req.query.title as string) > -1)
     }
+    res.send(foundCourse);
 })
 
-app.get('/slaves/:slavesTitle', (req, res) => {
-    const prodVan = productSlaves.filter(item => item.title === req.params.slavesTitle)
-    prodVan ? res.send(prodVan) : res.sendStatus(404);
+app.get("/courses/:id", (req: Request<{id: number | string}>, res) => {
+    const foundCourses = db.courses.find(item => item.id === +req.params.id)
+
+    if(!foundCourses) return res.sendStatus(404)
+
+    res.send(foundCourses)
 })
 
+app.post("/courses", (req: Request<{}, {}, {title: string}>, res:Response<IResponse>) => {
+    if(!req.body.title) {
+        return res.sendStatus(404);
+    }
 
-app.get('/slaves/:slavesTitle/:id', (req, res) => {
-    const prodId = productSlaves.filter(item => item.id ===  +req.params.id )
-    if (prodId) {
-        res.send(prodId)
-    } else {
+    const createdCourse = {
+        id: +(new Date()),
+        title: req.body.title
+    }
+    db.courses.push(createdCourse);
+
+    res.status(201).json(createdCourse);
+})
+
+app.delete("/courses/:id", (req:Request<{id: string}>,res) => {
+    db.courses = db.courses.filter(item => item.id !== +req.params.id)
+    res.send(204)
+})
+
+app.put("/courses/:id", (req:Request<{id: string}, {}, {title: string}>, res) => {
+    if(! +req.body.title) {
         res.sendStatus(404)
-    }
-})
-
-
-app.delete("/slaves/:id", (req,res) => {
-    for (let i:number = 0; i < productSlaves.length; i++) {
-        if (productSlaves[i].id === +req.params.id) {
-            productSlaves.splice(i, 1)
-            res.sendStatus(204);
-            return
-        } else {
-            res.sendStatus(404)
-        }
-    }
-})
-
-app.post("/slaves", (req, res)=>{
-    const newProduct = {id: +(new Date()), title: JSON.stringify(req.body.title), price: 1500}
-    productSlaves.push(newProduct);
-    res.status(201)
-    res.send(productSlaves)
-})
-
-app.put("/slaves/:id", (req, res) =>{
-    let product = productSlaves.find(item => item.id === +req.params.id);
-
-    if(product) {
-        product.title =  req.body.title;
-        res.send(product).sendStatus(200)
-    } else {
-        res.send(404)
+        return
     }
 
+    const foundCourse = db.courses.find(item => item.id === +req.params.id)
 
+    if (!foundCourse) {
+        res.sendStatus(404)
+        return
+    }
+
+    foundCourse.title = req.body.title
+
+    res.sendStatus(204);
 })
-
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)

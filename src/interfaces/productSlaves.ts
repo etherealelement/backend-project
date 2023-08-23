@@ -3,3 +3,14 @@ export interface IproductSlaves {
     title: string;
     price: number | string;
 }
+
+
+export interface IResponse { 
+    id: number;
+    title: string;
+};
+
+
+export interface IDataBase {
+    courses: IResponse[]
+}

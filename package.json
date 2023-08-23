@@ -6,8 +6,13 @@
   "author": "ethereal element <vitalik.safonov@list.ru>",
   "license": "MIT",
   "dependencies": {
+    "@types/jest": "^29.5.3",
+    "@types/supertest": "^2.0.12",
     "body-parser": "^1.20.2",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "jest": "^29.6.3",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
@@ -20,6 +25,7 @@
     "dev": "nodemon --inspect .\\dist\\index.js",
     "watch": "tsc -w",
     "build": "tsc",
-    "start": "node dis/index.js"
+    "start": "node dis/index.js",
+    "test": "jest"
   }
 }
